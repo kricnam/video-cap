@@ -140,19 +140,19 @@
             var userid = getRandomIntInclusive(100000, 999999).toString();
             var count = 0;
             console.info(userid);
-
+            
             function addStreamStopListener(stream, callback) {
                 var streamEndedEvent = 'ended';
-
+            
                 if ('oninactive' in stream) {
                     streamEndedEvent = 'inactive';
                 }
-
+            
                 stream.addEventListener(streamEndedEvent, function() {
                     callback();
                     callback = function() {};
                 }, false);
-
+            
                 stream.getAudioTracks().forEach(function(track) {
                     track.addEventListener(streamEndedEvent, function() {
                         callback();
@@ -167,22 +167,22 @@
                     }, false);
                 });
             }
-
-
+            
+            
             var recordingDIV = document.querySelector('.recordrtc');
             var recordingMedia = recordingDIV.querySelector('.recording-media');
             var recordingPlayer = recordingDIV.querySelector('video');
             var mediaContainerFormat = recordingDIV.querySelector('.media-container-format');
-
+            
             window.onbeforeunload = function() {
                 recordingDIV.querySelector('button').disabled = false;
                 recordingMedia.disabled = false;
                 mediaContainerFormat.disabled = false;
             };
-
+            
             recordingDIV.querySelector('button').onclick = function() {
                 var button = recordingDIV.querySelector('button');
-
+            
                 if (button.innerHTML === '停止录制') {
                     button.disabled = true;
                     button.disableStateWaiting = true;
@@ -190,17 +190,17 @@
                         button.disabled = false;
                         button.disableStateWaiting = false;
                     }, 2 * 1000);
-
+            
                     button.innerHTML = '开始录制';
-
+            
                     function stopStream() {
                         if (button.stream && button.stream.stop) {
                             button.stream.stop();
                             button.stream = null;
                         }
                     }
-
-
+            
+            
                     if (button.recordRTC) {
                         if (button.recordRTC.length) {
                             button.recordRTC[0].stopRecording(function(url) {
@@ -210,7 +210,7 @@
                                     saveToDiskOrOpenNewTab(button.recordRTC[0]);
                                     return;
                                 }
-
+            
                                 button.recordRTC[1].stopRecording(function(url) {
                                     button.recordingEndedCallback(url);
                                     stopStream();
@@ -222,16 +222,16 @@
                                 stopStream();
                                 saveToDiskOrOpenNewTab(button.recordRTC);
                                 recordingDIV.querySelector('#upload-to-server').click();
-
+            
                             });
                         }
                     }
-
+            
                     return;
                 } else {
-
+            
                 }
-
+            
 
                 button.disabled = true;
 
@@ -361,9 +361,9 @@
                         }, 10 * 1000);
                     };
                 }
-
+            
             };
-
+            
             function captureAudioPlusVideo(config) {
                 captureUserMedia({
                     video: true,
@@ -412,7 +412,7 @@
                     }
                 });
             }
-
+            
             recordingMedia.onchange = function() {
                 if (this.value === 'record-audio') {
                     setMediaContainerFormat(['WAV', 'Ogg']);
@@ -467,7 +467,7 @@
                         button.innerHTML = progress;
                     });
                 };
-
+            
 
             }
 
@@ -494,22 +494,22 @@
                 formData.append(fileType + '-blob', blob);
 
                 callback('Uploading ' + fileType + ' recording to server.');
-
+            
                 makeXMLHttpRequest('save.php', formData, function(progress) {
                     if (progress !== 'upload-ended') {
                         callback(progress);
                         return;
                     }
-
+            
                     var initialURL = location.href.replace(location.href.split('/').pop(), '') + 'uploads/';
-
+            
                     callback('ended', initialURL + fileName);
-
+            
                     // to make sure we can delete as soon as visitor leaves
                     listOfFilesUploaded.push(initialURL + fileName);
                 });
             }
-
+            
             function makeXMLHttpRequest(url, data, callback) {
                 var request = new XMLHttpRequest();
                 request.onreadystatechange = function() {
@@ -518,10 +518,10 @@
                     }
                 };
 
-                request.upload.onloadstart = function() {
+            request.upload.onloadstart = function() {
                     callback('Upload started...');
                 };
-
+            
                 request.upload.onprogress = function(event) {
                     callback('Upload Progress ' + Math.round(event.loaded / event.total * 100) + "%");
                 };
