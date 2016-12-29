@@ -6,9 +6,7 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
-
     <link rel="stylesheet" href="css/style.css">
 
     <style>
@@ -89,33 +87,22 @@
         </h1>
         </header>
 
-        <div class="github-stargazers"></div>
         <section class="experiment recordrtc">
             <h2 class="header">
-          <select class="recording-media">
+              <select class="recording-media" style="display: none">
             <option value="record-audio-plus-video">Microphone+Camera</option>
-            <option disabled value="record-video">Video</option>
-            <option disabled value="record-audio">Audio</option>
-            <option disabled value="record-screen">Screen</option>
           </select>
-          
-          into
-          <select class="media-container-format">
-            <option disabled>WebM</option>
-            <option>Mp4</option>
-            <option disabled>WAV</option>
-            <option disabled>Ogg</option>
-            <option disabled>Gif</option>
-          </select>
-          
-          <button>开始录制</button>
-          
+              
+              <select class="media-container-format" style="display: none">
+            <option>WebM</option>
+              </select>
+              <div id="prompt">按下开始录制按钮后，朗读下面蓝色字体的句子，朗读结束后再次安下按钮停止录制。</div>
+           <button>开始录制</button>
             </h2>
-            <div id="text-read" style="text-align: center;">TTTTTTT</div>
+            <div id="text-read" style="text-align: center;font-size: 2em;color: blue;">坚持实事求是诚实守信</div>
             <br>
             <video controls muted></video>
             <br>
-
             <div style="text-align: center; display: none;">
                 <button id="save-to-disk">保存</button>
                 <button id="open-new-tab">观看</button>
@@ -145,6 +132,15 @@
                 window.params = params;
             })();
 
+            function getRandomIntInclusive(min, max) {
+                min = Math.ceil(min);
+                max = Math.floor(max);
+                return Math.floor(Math.random() * (max - min + 1)) + min;
+            }
+            var userid = getRandomIntInclusive(100000, 999999).toString();
+            var count = 0;
+            console.info(userid);
+
             function addStreamStopListener(stream, callback) {
                 var streamEndedEvent = 'ended';
 
@@ -163,7 +159,7 @@
                         callback = function() {};
                     }, false);
                 });
-
+            
                 stream.getVideoTracks().forEach(function(track) {
                     track.addEventListener(streamEndedEvent, function() {
                         callback();
@@ -204,6 +200,7 @@
                         }
                     }
 
+
                     if (button.recordRTC) {
                         if (button.recordRTC.length) {
                             button.recordRTC[0].stopRecording(function(url) {
@@ -231,6 +228,8 @@
                     }
 
                     return;
+                } else {
+
                 }
 
 
@@ -301,8 +300,8 @@
                                 type: 'video',
                                 disableLogs: params.disableLogs || false,
                                 canvas: {
-                                    width: params.canvas_width || 640,
-                                    height: params.canvas_height || 480
+                                    width: 640,
+                                    height: 480
                                 },
                                 frameInterval: typeof params.frameInterval !== 'undefined' ? parseInt(params.frameInterval) : 20 // minimum time between pushing frames to Whammy (in milliseconds)
                             });
@@ -322,7 +321,7 @@
                                 audio.src = audioRecorder.toURL();
                                 audio.controls = true;
                                 audio.autoplay = true;
-
+            
                                 audio.onloadedmetadata = function() {
                                     recordingPlayer.src = videoRecorder.toURL();
                                     recordingPlayer.play();
@@ -356,6 +355,10 @@
                         };
 
                         button.recordRTC.startRecording();
+                        setTimeout(function() {
+                            if (button.innerHTML === '停止录制')
+                                button.click();
+                        }, 10 * 1000);
                     };
                 }
 
@@ -464,6 +467,8 @@
                         button.innerHTML = progress;
                     });
                 };
+
+
             }
 
             var listOfFilesUploaded = [];
@@ -472,13 +477,16 @@
                 console.info("in upload");
                 var blob = recordRTC instanceof Blob ? recordRTC : recordRTC.blob;
                 var fileType = blob.type.split('/')[0] || 'audio';
-                var fileName = (Math.random() * 1000).toString().replace('.', '');
-
+                var fileName = userid + "." + count.toString();
+                count += 1;
                 if (fileType === 'audio') {
                     fileName += '.' + (!!navigator.mozGetUserMedia ? 'ogg' : 'wav');
                 } else {
                     fileName += '.webm';
                 }
+
+                document.getElementById('prompt').innerHTML = "还需要朗读" + (10 - count).toString() + "句短句";
+
 
                 // create FormData
                 var formData = new FormData();
@@ -539,36 +547,6 @@
                 request.open('POST', url);
                 request.send(data);
             }
-
-            window.onbeforeunload = function() {
-                recordingDIV.querySelector('button').disabled = false;
-                recordingMedia.disabled = false;
-                mediaContainerFormat.disabled = false;
-
-                if (!listOfFilesUploaded.length) return;
-
-                listOfFilesUploaded.forEach(function(fileURL) {
-                    var request = new XMLHttpRequest();
-                    request.onreadystatechange = function() {
-                        if (request.readyState == 4 && request.status == 200) {
-                            if (this.responseText === ' problem deleting files.') {
-                                alert('Failed to delete ' + fileURL + ' from the server.');
-                                return;
-                            }
-
-                            listOfFilesUploaded = [];
-                            alert('You can leave now. Your files are removed from the server.');
-                        }
-                    };
-                    request.open('POST', 'delete.php');
-
-                    var formData = new FormData();
-                    formData.append('delete-file', fileURL.split('/').pop());
-                    request.send(formData);
-                });
-
-                return 'Please wait few seconds before your recordings are deleted from the server.';
-            };
         </script>
 
     </article>
