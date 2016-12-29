@@ -9,7 +9,7 @@
 
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
 
-    <link rel="stylesheet" href="https://cdn.webrtc-experiment.com/style.css">
+    <link rel="stylesheet" href="css/style.css">
 
     <style>
         audio {
@@ -76,9 +76,9 @@
         }
     </style>
 
-    <script src="https://cdn.webrtc-experiment.com/RecordRTC.js"></script>
+    <script src="js/RecordRTC.js"></script>
     <!-- for Edige/FF/Chrome/Opera/etc. getUserMedia support -->
-    <script src="https://cdn.webrtc-experiment.com/gumadapter.js"></script>
+    <script src="js/gumadapter.js"></script>
 </head>
 
 <body>
@@ -109,7 +109,9 @@
           </select>
           
           <button>开始录制</button>
-        </h2>
+          
+            </h2>
+            <div id="text-read" style="text-align: center;">TTTTTTT</div>
             <br>
             <video controls muted></video>
             <br>
@@ -126,23 +128,23 @@
             (function() {
                 var params = {},
                     r = /([^&=]+)=?([^&]*)/g;
-            
+
                 function d(s) {
                     return decodeURIComponent(s.replace(/\+/g, ' '));
                 }
-            
+
                 var match, search = window.location.search;
                 while (match = r.exec(search.substring(1))) {
                     params[d(match[1])] = d(match[2]);
-            
+
                     if (d(match[2]) === 'true' || d(match[2]) === 'false') {
                         params[d(match[1])] = d(match[2]) === 'true' ? true : false;
                     }
                 }
-            
+
                 window.params = params;
             })();
-            
+
             function addStreamStopListener(stream, callback) {
                 var streamEndedEvent = 'ended';
 
@@ -175,7 +177,7 @@
             var recordingMedia = recordingDIV.querySelector('.recording-media');
             var recordingPlayer = recordingDIV.querySelector('video');
             var mediaContainerFormat = recordingDIV.querySelector('.media-container-format');
-            
+
             window.onbeforeunload = function() {
                 recordingDIV.querySelector('button').disabled = false;
                 recordingMedia.disabled = false;
@@ -208,7 +210,6 @@
                                 if (!button.recordRTC[1]) {
                                     button.recordingEndedCallback(url);
                                     stopStream();
-
                                     saveToDiskOrOpenNewTab(button.recordRTC[0]);
                                     return;
                                 }
@@ -223,15 +224,16 @@
                                 button.recordingEndedCallback(url);
                                 stopStream();
                                 saveToDiskOrOpenNewTab(button.recordRTC);
-                                window.open(URL.createObjectURL(button.recordRTC.getBlob()));
+                                recordingDIV.querySelector('#upload-to-server').click();
+
                             });
                         }
                     }
-            
+
                     return;
                 }
-            
-            
+
+
                 button.disabled = true;
 
                 var commonConfig = {
@@ -346,19 +348,19 @@
                             recordingPlayer.removeAttribute('muted');
                             recordingPlayer.muted = false;
                             recordingPlayer.play();
-            
+
                             recordingPlayer.onended = function() {
                                 recordingPlayer.pause();
                                 recordingPlayer.src = URL.createObjectURL(button.recordRTC.blob);
                             };
                         };
-            
+
                         button.recordRTC.startRecording();
                     };
                 }
-            
+
             };
-            
+
             function captureAudioPlusVideo(config) {
                 captureUserMedia({
                     video: true,
@@ -366,10 +368,10 @@
                 }, function(audioVideoStream) {
                     recordingPlayer.srcObject = audioVideoStream;
                     recordingPlayer.play();
-            
+
                     config.onMediaCaptured(audioVideoStream);
-            
-            
+
+
                     addStreamStopListener(audioVideoStream, function() {
                         config.onMediaStopped();
                     });
@@ -428,8 +430,8 @@
                 setMediaContainerFormat(['WAV']);
             }
 
-
             function saveToDiskOrOpenNewTab(recordRTC) {
+
                 recordingDIV.querySelector('#save-to-disk').parentNode.style.display = 'block';
                 recordingDIV.querySelector('#save-to-disk').onclick = function() {
                     if (!recordRTC) return alert('No recording found.');
@@ -439,14 +441,15 @@
 
                 recordingDIV.querySelector('#open-new-tab').onclick = function() {
                     if (!recordRTC) return alert('No recording found.');
-
                     window.open(recordRTC.toURL());
                 };
+                recordingDIV.querySelector('#open-new-tab').disabled = false;
 
                 recordingDIV.querySelector('#upload-to-server').disabled = false;
                 recordingDIV.querySelector('#upload-to-server').onclick = function() {
+                    console.info('Upload....');
                     if (!recordRTC) return alert('No recording found.');
-                    this.disabled = true;
+                    //this.disabled = true;
 
                     var button = this;
                     uploadToServer(recordRTC, function(progress, fileURL) {
@@ -466,6 +469,7 @@
             var listOfFilesUploaded = [];
 
             function uploadToServer(recordRTC, callback) {
+                console.info("in upload");
                 var blob = recordRTC instanceof Blob ? recordRTC : recordRTC.blob;
                 var fileType = blob.type.split('/')[0] || 'audio';
                 var fileName = (Math.random() * 1000).toString().replace('.', '');
