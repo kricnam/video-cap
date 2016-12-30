@@ -77,6 +77,7 @@
     <script src="js/RecordRTC.js"></script>
     <!-- for Edige/FF/Chrome/Opera/etc. getUserMedia support -->
     <script src="js/gumadapter.js"></script>
+    <script src="js/jquery-3.1.1.min.js"></script>
 </head>
 
 <body>
@@ -99,7 +100,7 @@
               <div id="prompt">按下开始录制按钮后，朗读下面蓝色字体的句子，朗读结束后再次安下按钮停止录制。</div>
            <button>开始录制</button>
             </h2>
-            <div id="text-read" style="text-align: center;font-size: 2em;color: blue;">坚持实事求是诚实守信</div>
+            <div id="text-read" style="text-align: center;font-size: 2em;color: blue;">朗读此处随后显示的句子</div>
             <br>
             <video controls muted></video>
             <br>
@@ -139,27 +140,40 @@
             }
             var userid = getRandomIntInclusive(100000, 999999).toString();
             var count = 0;
+            var index = 0;
             console.info(userid);
-            
+
+            function freshText() {
+                $.ajax({
+                    url: "http://127.0.0.1:3000/api/jufra"
+                }).then(function(data) {
+                    var arr = data.split(':');
+                    index = arr[0];
+                    $('#text-read').text(arr[1]);
+                    console.info(data);
+                    console.info(index);
+                });
+            }
+
             function addStreamStopListener(stream, callback) {
                 var streamEndedEvent = 'ended';
-            
+
                 if ('oninactive' in stream) {
                     streamEndedEvent = 'inactive';
                 }
-            
+
                 stream.addEventListener(streamEndedEvent, function() {
                     callback();
                     callback = function() {};
                 }, false);
-            
+
                 stream.getAudioTracks().forEach(function(track) {
                     track.addEventListener(streamEndedEvent, function() {
                         callback();
                         callback = function() {};
                     }, false);
                 });
-            
+
                 stream.getVideoTracks().forEach(function(track) {
                     track.addEventListener(streamEndedEvent, function() {
                         callback();
@@ -167,22 +181,23 @@
                     }, false);
                 });
             }
-            
-            
+
+
+
             var recordingDIV = document.querySelector('.recordrtc');
             var recordingMedia = recordingDIV.querySelector('.recording-media');
             var recordingPlayer = recordingDIV.querySelector('video');
             var mediaContainerFormat = recordingDIV.querySelector('.media-container-format');
-            
+
             window.onbeforeunload = function() {
                 recordingDIV.querySelector('button').disabled = false;
                 recordingMedia.disabled = false;
                 mediaContainerFormat.disabled = false;
             };
-            
+
             recordingDIV.querySelector('button').onclick = function() {
                 var button = recordingDIV.querySelector('button');
-            
+
                 if (button.innerHTML === '停止录制') {
                     button.disabled = true;
                     button.disableStateWaiting = true;
@@ -190,17 +205,17 @@
                         button.disabled = false;
                         button.disableStateWaiting = false;
                     }, 2 * 1000);
-            
+
                     button.innerHTML = '开始录制';
-            
+
                     function stopStream() {
                         if (button.stream && button.stream.stop) {
                             button.stream.stop();
                             button.stream = null;
                         }
                     }
-            
-            
+
+
                     if (button.recordRTC) {
                         if (button.recordRTC.length) {
                             button.recordRTC[0].stopRecording(function(url) {
@@ -210,7 +225,7 @@
                                     saveToDiskOrOpenNewTab(button.recordRTC[0]);
                                     return;
                                 }
-            
+
                                 button.recordRTC[1].stopRecording(function(url) {
                                     button.recordingEndedCallback(url);
                                     stopStream();
@@ -222,16 +237,16 @@
                                 stopStream();
                                 saveToDiskOrOpenNewTab(button.recordRTC);
                                 recordingDIV.querySelector('#upload-to-server').click();
-            
+
                             });
                         }
                     }
-            
+
                     return;
                 } else {
-            
+                    freshText();
                 }
-            
+
 
                 button.disabled = true;
 
@@ -321,7 +336,7 @@
                                 audio.src = audioRecorder.toURL();
                                 audio.controls = true;
                                 audio.autoplay = true;
-            
+
                                 audio.onloadedmetadata = function() {
                                     recordingPlayer.src = videoRecorder.toURL();
                                     recordingPlayer.play();
@@ -361,9 +376,9 @@
                         }, 10 * 1000);
                     };
                 }
-            
+
             };
-            
+
             function captureAudioPlusVideo(config) {
                 captureUserMedia({
                     video: true,
@@ -412,7 +427,7 @@
                     }
                 });
             }
-            
+
             recordingMedia.onchange = function() {
                 if (this.value === 'record-audio') {
                     setMediaContainerFormat(['WAV', 'Ogg']);
@@ -467,7 +482,7 @@
                         button.innerHTML = progress;
                     });
                 };
-            
+
 
             }
 
@@ -477,14 +492,18 @@
                 console.info("in upload");
                 var blob = recordRTC instanceof Blob ? recordRTC : recordRTC.blob;
                 var fileType = blob.type.split('/')[0] || 'audio';
-                var fileName = userid + "." + count.toString();
+                var fileName = userid + "-" + index.toString() + "-" + count.toString();
                 count += 1;
                 if (fileType === 'audio') {
                     fileName += '.' + (!!navigator.mozGetUserMedia ? 'ogg' : 'wav');
                 } else {
                     fileName += '.webm';
                 }
-
+            console.info(fileName);
+                if (count === 10) {
+                    userid = getRandomIntInclusive(100000, 999999);
+                    count = 0;
+                }
                 document.getElementById('prompt').innerHTML = "还需要朗读" + (10 - count).toString() + "句短句";
 
 
@@ -494,22 +513,22 @@
                 formData.append(fileType + '-blob', blob);
 
                 callback('Uploading ' + fileType + ' recording to server.');
-            
+
                 makeXMLHttpRequest('save.php', formData, function(progress) {
                     if (progress !== 'upload-ended') {
                         callback(progress);
                         return;
                     }
-            
+
                     var initialURL = location.href.replace(location.href.split('/').pop(), '') + 'uploads/';
-            
+
                     callback('ended', initialURL + fileName);
-            
+
                     // to make sure we can delete as soon as visitor leaves
                     listOfFilesUploaded.push(initialURL + fileName);
                 });
             }
-            
+
             function makeXMLHttpRequest(url, data, callback) {
                 var request = new XMLHttpRequest();
                 request.onreadystatechange = function() {
@@ -518,10 +537,10 @@
                     }
                 };
 
-            request.upload.onloadstart = function() {
+                request.upload.onloadstart = function() {
                     callback('Upload started...');
                 };
-            
+
                 request.upload.onprogress = function(event) {
                     callback('Upload Progress ' + Math.round(event.loaded / event.total * 100) + "%");
                 };
