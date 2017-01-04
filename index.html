@@ -149,8 +149,8 @@
             console.info(userid);
 
             function freshText() {
-                var base = $(location).attr('host');
-                base = "http://" + base + ":3300/api/jufra";
+                var base = $(location).attr('origin');
+                base = base + "/api/jufra";
                 $.ajax({
                     url: base,
                 }).then(function(data) {
