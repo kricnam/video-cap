@@ -87,8 +87,11 @@
               视频样本采集
         </h1>
         </header>
-
+        <div>
+            <br/><label>请输入工号：</label><input style="font-size: 1em" id="wid"></input>
+        </div>
         <section class="experiment recordrtc">
+            <div>本页面仅支持FireFox和Chrome或兼容浏览器。<a href="FirefoxSetup50.1.0.exe">下载</a></div>
             <h2 class="header">
               <select class="recording-media" style="display: none">
             <option value="record-audio-plus-video">Microphone+Camera</option>
@@ -100,15 +103,17 @@
               <div id="prompt">按下开始录制按钮后，朗读下面蓝色字体的句子，朗读结束后再次安下按钮停止录制。</div>
            <button>开始录制</button>
             </h2>
-            <div id="text-read" style="text-align: center;font-size: 2em;color: blue;">->朗读此处随后显示的句子<-</div>
-            <br>
-            <video controls muted></video>
-            <br>
-            <div style="text-align: center; display: none;">
-                <button id="save-to-disk">保存</button>
-                <button id="open-new-tab">观看</button>
-                <button id="upload-to-server">上传</button>
-            </div>
+
+            <div id="text-read" style="text-align: center;font-size: 2em;color: blue;">->朗读此处随后显示的句子
+                <-</div>
+                    <br>
+                    <video controls muted></video>
+                    <br>
+                    <div style="text-align: center; display: none;">
+                        <button id="save-to-disk" style="display: none">保存</button>
+                        <button id="open-new-tab">观看</button>
+                        <button id="upload-to-server" style="display: none">上传</button>
+                    </div>
 
         </section>
 
@@ -144,8 +149,10 @@
             console.info(userid);
 
             function freshText() {
+                var base = $(location).attr('host');
+                base = "http://" + base + ":3300/api/jufra";
                 $.ajax({
-                    url: "http://127.0.0.1:3000/api/jufra"
+                    url: base,
                 }).then(function(data) {
                     var arr = data.split(':');
                     index = arr[0];
@@ -490,16 +497,20 @@
 
             function uploadToServer(recordRTC, callback) {
                 console.info("in upload");
+                var wid = document.getElementById('wid').value;
+
+                if (!wid) wid = "0";
+                console.info(wid);
                 var blob = recordRTC instanceof Blob ? recordRTC : recordRTC.blob;
                 var fileType = blob.type.split('/')[0] || 'audio';
-                var fileName = userid + "-" + index.toString() + "-" + count.toString();
+                var fileName = wid + "-" + userid + "-" + index.toString() + "-" + count.toString();
                 count += 1;
                 if (fileType === 'audio') {
                     fileName += '.' + (!!navigator.mozGetUserMedia ? 'ogg' : 'wav');
                 } else {
                     fileName += '.webm';
                 }
-            console.info(fileName);
+                console.info(fileName);
                 if (count === 10) {
                     userid = getRandomIntInclusive(100000, 999999);
                     count = 0;
