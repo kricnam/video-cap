@@ -325,6 +325,7 @@
                                     width: 640,
                                     height: 480
                                 },
+
                                 frameInterval: typeof params.frameInterval !== 'undefined' ? parseInt(params.frameInterval) : 20 // minimum time between pushing frames to Whammy (in milliseconds)
                             });
 
@@ -361,7 +362,8 @@
                             type: 'video',
                             mimeType: mimeType,
                             disableLogs: params.disableLogs || false,
-                            getNativeBlob: false
+                            getNativeBlob: false,
+                            //sampleRate: 2097152,
                         });
 
                         button.recordingEndedCallback = function(url) {
@@ -583,7 +585,7 @@
 
     <footer>
         <p>
-            <a href="http://id5.cn/">WebCam Cap Tool</a> © <a href="http://www.id5.cn">id5.cn</a>
+            © <a href="http://www.id5.cn">id5.cn</a>
         </p>
     </footer>
 
