@@ -510,9 +510,13 @@
 
             var listOfFilesUploaded = [];
 
+            function trim(str) {
+                return str.replace(/(^\s+)|(\s+$)/g, "");
+            }
+
             function uploadToServer(recordRTC, callback) {
                 console.info("in upload");
-                var wid = document.getElementById('wid').value;
+                var wid = trim(document.getElementById('wid').value);
 
                 if (!wid) wid = "0";
                 console.info(wid);
