@@ -66,7 +66,7 @@
         }
         
         .recordrtc video {
-            width: 100%;
+            width: 60%;
         }
         
         .recordrtc option[disabled] {
@@ -101,7 +101,7 @@
             <option>WebM</option>
               </select>
               <div id="prompt">按下开始录制按钮后，朗读下面蓝色字体的句子，朗读结束后再次安下按钮停止录制。</div>
-           <button>开始录制</button>
+              <button>开始录制</button>
             </h2>
 
             <div id="text-read" style="text-align: center;font-size: 2em;color: blue;">->朗读此处随后显示的句子
@@ -162,6 +162,9 @@
                 });
             }
 
+
+
+
             function addStreamStopListener(stream, callback) {
                 var streamEndedEvent = 'ended';
 
@@ -195,6 +198,7 @@
             var recordingMedia = recordingDIV.querySelector('.recording-media');
             var recordingPlayer = recordingDIV.querySelector('video');
             var mediaContainerFormat = recordingDIV.querySelector('.media-container-format');
+            var ttimeout;
 
             window.onbeforeunload = function() {
                 recordingDIV.querySelector('button').disabled = false;
@@ -202,12 +206,21 @@
                 mediaContainerFormat.disabled = false;
             };
 
+            window.onkeydown = function() {　　　　　　　　
+                if (32 == event.keyCode) {　　　　　　　　　　
+                    recordingDIV.querySelector('button').click();
+                }
+            }
+
+
+
             recordingDIV.querySelector('button').onclick = function() {
                 var button = recordingDIV.querySelector('button');
 
                 if (button.innerHTML === '停止录制') {
                     button.disabled = true;
                     button.disableStateWaiting = true;
+                    clearTimeout(ttimeout);
                     setTimeout(function() {
                         button.disabled = false;
                         button.disableStateWaiting = false;
@@ -379,7 +392,7 @@
                         };
 
                         button.recordRTC.startRecording();
-                        setTimeout(function() {
+                        ttimeout = setTimeout(function() {
                             if (button.innerHTML === '停止录制')
                                 button.click();
                         }, 10 * 1000);
